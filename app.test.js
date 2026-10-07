@@ -28,6 +28,17 @@ test('a useful review produces a rating, action, and portable recap', () => {
 test('reviews require both a valid rating and something to discuss', () => {
   assert.match(validateReview({ rating: 0, win: 'A real win was teamwork.' }), /rating/);
   assert.match(validateReview({ rating: 3, win: 'Good' }), /detail/);
+  assert.match(validateReview({ rating: 4, body: '', next: 'Plan earlier' }), /Write at least 10 characters/);
+});
+
+test('Sprint 20 starts with an empty real-review timeline and accepts one review body', () => {
+  const board = newBoard();
+  assert.equal(board.title, 'Sprint 20');
+  assert.equal(board.reviews.length, 0);
+  const review = createReview({ rating: 5, body: 'The team helped each other clear blockers quickly.', tags: ['Teamwork'], next: 'Keep the short check-ins.' });
+  board.reviews.push(review);
+  assert.equal(review.body, 'The team helped each other clear blockers quickly.');
+  assert.match(buildRecap(board), /The team helped each other clear blockers quickly/);
 });
 
 test('art prompt asks for an original cast without franchise characters', () => {

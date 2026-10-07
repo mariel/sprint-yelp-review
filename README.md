@@ -1,6 +1,6 @@
 # The Sprint Table
 
-A restaurant-review-inspired sprint retro app. Rate each sprint, write what worked and what needs work, collect specific next-sprint actions, make original cartoon cover art, and download a Markdown recap.
+A restaurant-review-inspired sprint retro app. The sprint opens on a review timeline, with a separate tab to write a review. Rate the sprint, leave an optional next-sprint action, make original cartoon cover art, and download a Markdown recap. Example reviews appear in the timeline until the first real review is posted.
 
 ## Run locally
 
