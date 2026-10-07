@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff8ed" />
+    <meta name="description" content="Review your sprint like a restaurant, then leave with a better recipe for the next one." />
+    <title>The Sprint Table — a retro worth reviewing</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="The Sprint Table home"><span class="brand-mark" aria-hidden="true">✦</span><span>the sprint <strong>table.</strong></span></a>
+        <nav class="top-nav" aria-label="Main navigation">
+          <a href="#write-review">Write a review</a>
+          <a href="#reviews">Reviews</a>
+          <a href="#next-sprint">Next sprint</a>
+        </nav>
+        <button class="button button-ghost small" id="edit-sprint" type="button">Edit sprint <span aria-hidden="true">↗</span></button>
+      </header>
+
+      <main id="top">
+        <section class="hero" aria-labelledby="sprint-title">
+          <img id="hero-image" class="hero-image" src="/assets/sprint-kitchen.jpg" alt="Original playful animal characters celebrating together in a restaurant kitchen" />
+          <div class="hero-shade"></div>
+          <div class="hero-content">
+            <div class="eyebrow hero-eyebrow"><span class="live-dot"></span> NOW SERVING · SPRINT RETROSPECTIVE</div>
+            <h1 id="sprint-title">Sprint 12: The Big Launch</h1>
+            <p id="sprint-subtitle">A little teamwork, a few spicy surprises, and plenty to talk about.</p>
+            <div class="hero-meta"><span id="team-name">The Product Kitchen</span><span class="meta-divider">•</span><span id="sprint-dates">Sep 23 – Oct 6, 2026</span></div>
+          </div>
+          <button id="open-art-studio" class="hero-art-button" type="button"><span aria-hidden="true">✦</span> Make new cover art</button>
+        </section>
+
+        <div class="content-grid">
+          <div class="main-column">
+            <section class="overview" aria-label="Sprint rating summary">
+              <div class="overview-intro"><div class="eyebrow red">THE VERDICT SO FAR</div><h2>A seat at the table for everyone.</h2></div>
+              <div class="score-block"><strong id="average-rating">—</strong><div><div class="stars-display" id="average-stars" aria-hidden="true">☆☆☆☆☆</div><span id="review-count">No reviews yet</span></div></div>
+            </section>
+
+            <section id="write-review" class="review-panel" aria-labelledby="write-title">
+              <div class="section-topline"><span class="eyebrow red">01 / YOUR REVIEW</span><span class="topline-note">Honest feedback makes a better next sprint.</span></div>
+              <h2 id="write-title">How was this sprint?</h2>
+              <p class="section-lead">Treat it like a restaurant review: celebrate what was delicious, call out what needs work, and recommend what to try next.</p>
+
+              <form id="review-form" novalidate>
+                <fieldset class="rating-fieldset"><legend>Give this sprint a rating <span class="required">*</span></legend>
+                  <div class="rating-row"><div class="rating-stars" id="rating-stars" role="radiogroup" aria-label="Sprint rating">
+                    <button type="button" role="radio" aria-checked="false" aria-label="1 star" data-rating="1">★</button>
+                    <button type="button" role="radio" aria-checked="false" aria-label="2 stars" data-rating="2">★</button>
+                    <button type="button" role="radio" aria-checked="false" aria-label="3 stars" data-rating="3">★</button>
+                    <button type="button" role="radio" aria-checked="false" aria-label="4 stars" data-rating="4">★</button>
+                    <button type="button" role="radio" aria-checked="false" aria-label="5 stars" data-rating="5">★</button>
+                  </div><span id="rating-caption" class="rating-caption">Select your rating</span></div>
+                </fieldset>
+
+                <fieldset class="tag-fieldset"><legend>What are you reviewing? <span class="optional">Pick any that fit</span></legend>
+                  <div class="tag-options" id="tag-options">
+                    <button type="button" class="tag-option" data-tag="Teamwork" aria-pressed="false">🤝 Teamwork</button>
+                    <button type="button" class="tag-option" data-tag="Scope" aria-pressed="false">📋 Scope</button>
+                    <button type="button" class="tag-option" data-tag="Delivery" aria-pressed="false">🚀 Delivery</button>
+                    <button type="button" class="tag-option" data-tag="Blockers" aria-pressed="false">🚧 Blockers</button>
+                    <button type="button" class="tag-option" data-tag="Team energy" aria-pressed="false">✨ Team energy</button>
+                  </div>
+                </fieldset>
+
+                <div class="prompt-grid">
+                  <label class="prompt-field"><span class="prompt-icon green">✦</span><span class="prompt-title">What was delicious?</span><span class="prompt-help">Wins, good collaboration, things to keep.</span><textarea id="win" rows="4" maxlength="1000" placeholder="The team really came together when..."></textarea></label>
+                  <label class="prompt-field"><span class="prompt-icon coral">↝</span><span class="prompt-title">What left a bad taste?</span><span class="prompt-help">Friction, surprises, or anything overcooked.</span><textarea id="friction" rows="4" maxlength="1000" placeholder="We lost time when..."></textarea></label>
+                </div>
+                <div class="next-visit"><div><label for="next-step" class="prompt-title">What should we try next time?</label><p class="prompt-help">One small, specific change is better than a long wish list.</p></div><div class="next-inputs"><input id="next-step" maxlength="300" placeholder="e.g. Agree on acceptance criteria before work starts" /><input id="action-owner" maxlength="80" placeholder="Owner (optional)" aria-label="Action owner" /></div></div>
+                <div class="form-footer"><div class="identity-fields"><label for="reviewer-name">Your name <span class="optional">optional</span></label><input id="reviewer-name" maxlength="60" placeholder="A teammate" /></div><div class="submit-side"><span id="form-message" role="status" aria-live="polite">A rating and a little detail are all you need.</span><button class="button button-primary" type="submit">Post review <span aria-hidden="true">→</span></button></div></div>
+              </form>
+            </section>
+
+            <section id="reviews" class="reviews-section" aria-labelledby="reviews-title"><div class="section-heading"><div><span class="eyebrow red">02 / THE REVIEWS ARE IN</span><h2 id="reviews-title">What the table thinks</h2></div><div class="review-filter"><label for="filter-reviews">Show</label><select id="filter-reviews"><option value="all">All reviews</option><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select></div></div><div id="review-list" class="review-list"></div></section>
+          </div>
+
+          <aside class="sidebar">
+            <section class="sidebar-card menu-card"><div class="eyebrow red">THE RETRO MENU</div><h2>Good reviews make good recipes.</h2><div class="menu-item"><span>01</span><div><strong>Rate the sprint</strong><p>How did the whole experience feel?</p></div></div><div class="menu-item"><span>02</span><div><strong>Tell the story</strong><p>What worked, and what got in the way?</p></div></div><div class="menu-item"><span>03</span><div><strong>Leave a tip</strong><p>Pick one improvement for next time.</p></div></div></section>
+            <section id="next-sprint" class="sidebar-card action-card"><div class="eyebrow red">NEXT SPRINT'S SPECIALS</div><h2>Improvements to serve up</h2><p class="sidebar-description">Action ideas from reviews live here. Tick them off as the team tries them.</p><div id="action-list" class="action-list"></div></section>
+            <section class="sidebar-card art-card"><div class="art-icon" aria-hidden="true">✦</div><div class="eyebrow red">THE PHOTO BOOTH</div><h2>Give this sprint a face.</h2><p>Make original, cheerful cartoon teammates for your sprint’s restaurant cover.</p><button type="button" id="open-art-studio-side" class="button button-dark">Open art studio <span aria-hidden="true">↗</span></button></section>
+            <button type="button" id="download-recap" class="download-link">↓ &nbsp; Download a retro recap</button>
+          </aside>
+        </div>
+      </main>
+      <footer><span>Made for honest retros and better next sprints.</span><span>The Sprint Table · Your reviews stay in this browser</span></footer>
+    </div>
+
+    <dialog id="sprint-dialog" class="modal"><form id="sprint-form" method="dialog"><div class="modal-header"><span class="eyebrow red">SET THE TABLE</span><button type="button" class="icon-close" data-close="sprint-dialog" aria-label="Close">×</button></div><h2>Edit this sprint</h2><p>Name the sprint your team is reviewing, or start a fresh one.</p><label for="board-picker">Your sprints<select id="board-picker"></select></label><label for="edit-title">Sprint name<input id="edit-title" maxlength="80" required /></label><label for="edit-team">Team name<input id="edit-team" maxlength="60" /></label><label for="edit-dates">Dates or timeframe<input id="edit-dates" maxlength="60" /></label><label for="edit-description">Short description<textarea id="edit-description" rows="3" maxlength="180"></textarea></label><div class="modal-actions"><button type="button" class="button button-ghost" id="new-sprint">+ New sprint</button><button type="submit" class="button button-primary">Save changes</button></div></form></dialog>
+
+    <dialog id="art-dialog" class="modal art-modal"><div class="modal-header"><span class="eyebrow red">THE PHOTO BOOTH</span><button type="button" class="icon-close" data-close="art-dialog" aria-label="Close">×</button></div><div class="art-modal-grid"><div><h2>Make your sprint’s cover art.</h2><p>Describe an original cast of playful animal adventurers. We’ll put them in a restaurant scene inspired by your sprint.</p><label for="art-scene">What are they celebrating?</label><textarea id="art-scene" rows="3" maxlength="240" placeholder="The team shipped our new checkout just in time..."></textarea><label for="art-cast">Any character or mood notes?</label><textarea id="art-cast" rows="3" maxlength="240" placeholder="A curious teal bunny, a cheerful coral bear, warm evening light..."></textarea><label for="art-code">Art studio code <span class="optional">set when you connect the generator</span></label><input id="art-code" type="password" autocomplete="off" placeholder="Your private code" /><div class="art-modal-actions"><button type="button" id="copy-prompt" class="button button-ghost">Copy art prompt</button><button type="button" id="generate-art" class="button button-primary">Generate cover art <span aria-hidden="true">✦</span></button><button type="button" id="download-cover" class="button button-ghost">Download cover</button></div><p id="art-message" role="status" aria-live="polite" class="art-message">The sample art is ready now. Live generation needs an API key when you set it up.</p></div><div class="art-preview"><img id="art-preview-image" src="/assets/sprint-kitchen.jpg" alt="Current sprint cover art" /><span id="art-preview-caption">CURRENT COVER</span></div></div></dialog>
+  </body>
+</html>
