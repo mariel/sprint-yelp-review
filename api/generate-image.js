@@ -19,13 +19,13 @@ async function getBody(req) {
   let raw = '';
   for await (const chunk of req) {
     raw += chunk;
-    if (raw.length > 2500) throw new Error('Request is too large.');
+    if (raw.length > 4000) throw new Error('Request is too large.');
   }
   return JSON.parse(raw || '{}');
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return send(res, 405, { error: 'Use POST to generate cover art.' });
+  if (req.method !== 'POST') return send(res, 405, { error: 'Use POST to generate review art.' });
   if (!process.env.OPENAI_API_KEY || !process.env.ART_STUDIO_CODE) {
     return send(res, 503, { error: 'Live art is not connected yet. Add OPENAI_API_KEY and ART_STUDIO_CODE on the server, or copy the art prompt.' });
   }
@@ -33,8 +33,10 @@ export default async function handler(req, res) {
   try { body = await getBody(req); }
   catch { return send(res, 400, { error: 'The art request could not be read.' }); }
   if (!equalSecret(body.code, process.env.ART_STUDIO_CODE)) return send(res, 401, { error: 'That art studio code is not right.' });
-  const fields = ['title', 'description', 'scene', 'cast'];
-  if (fields.some(field => typeof body[field] !== 'string' || body[field].length > 500)) return send(res, 400, { error: 'Please shorten the art description and try again.' });
+  const fields = { title: 80, review: 1600, next: 300, scene: 240, cast: 240 };
+  if (Object.entries(fields).some(([field, limit]) => typeof body[field] !== 'string' || body[field].length > limit)) return send(res, 400, { error: 'Please shorten the review art description and try again.' });
+  if (String(body.review).trim().length < 10) return send(res, 400, { error: 'Write your review before generating an image.' });
+  if (body.rating !== 0 && (!Number.isInteger(body.rating) || body.rating < 1 || body.rating > 5)) return send(res, 400, { error: 'Choose a valid rating or leave it unselected.' });
   const prompt = buildArtPrompt(body);
   try {
     const upstream = await fetch('https://api.openai.com/v1/images/generations', {
@@ -46,7 +48,7 @@ export default async function handler(req, res) {
     const result = await upstream.json();
     if (!upstream.ok) {
       console.error('Image generation failed', upstream.status, result.error?.code || 'unknown');
-      return send(res, 502, { error: 'The art studio could not make an image right now. Try again shortly.' });
+      return send(res, 502, { error: 'The review image could not be made right now. Try again shortly.' });
     }
     const image = result.data?.[0]?.b64_json;
     if (!image) return send(res, 502, { error: 'The art studio returned no image. Try again.' });

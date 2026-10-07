@@ -4,29 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f8f7f5" />
-  <meta name="description" content="A simpler way to review a sprint, one honest review at a time." />
-  <title>Sprint 20 reviews · The Sprint Table</title>
+  <meta name="description" content="Review Sprint 20 at Maison Bleu." />
+  <title>Maison Bleu · Sprint 20 reviews</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/styles.css" />
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="The Sprint Table home"><span class="brand-mark" aria-hidden="true">✦</span><span>the sprint <strong>table.</strong></span></a>
-    <button type="button" id="edit-sprint" class="text-button">Edit sprint <span aria-hidden="true">↗</span></button>
-  </header>
-
   <main class="app-shell">
     <section class="sprint-card" aria-labelledby="sprint-title">
+      <img id="hero-image" src="/assets/sprint-kitchen.jpg" alt="Original playful animal characters celebrating in a restaurant kitchen" />
       <div class="sprint-copy">
-        <span class="eyebrow">THE SPRINT RESTAURANT</span>
-        <h1 id="sprint-title">Sprint 20</h1>
-        <p id="sprint-subtitle">Our pretend restaurant, reviewed by the team.</p>
-        <p class="sprint-meta"><span id="team-name">The Product Kitchen</span><span aria-hidden="true">·</span><span id="sprint-dates">Oct 2026</span></p>
-      </div>
-      <div class="cover-wrap">
-        <img id="hero-image" src="/assets/sprint-kitchen.jpg" alt="Original playful animal characters celebrating in a restaurant kitchen" />
-        <button type="button" id="open-art-studio" class="cover-button">Change cover art</button>
+        <span id="sprint-byline" class="eyebrow">SPRINT 20</span>
+        <h1 id="sprint-title">Maison Bleu</h1>
       </div>
     </section>
 
@@ -38,8 +28,7 @@
     <section id="panel-reviews" class="tab-panel" role="tabpanel" aria-labelledby="tab-reviews">
       <div class="section-heading">
         <div>
-          <h2>Reviews for <span id="reviews-sprint-name">Sprint 20</span></h2>
-          <p>Every perspective, in the order it was shared.</p>
+          <h2>Reviews for Maison Bleu</h2>
         </div>
         <button type="button" id="download-recap" class="subtle-button">↓ Download recap</button>
       </div>
@@ -48,14 +37,13 @@
         <span class="summary-stars" id="average-stars" aria-hidden="true">☆☆☆☆☆</span>
         <span class="summary-count" id="review-count">No reviews yet</span>
       </div>
-      <div id="preview-note" class="preview-note" hidden>Example reviews to preview the timeline. Your first review will replace them.</div>
       <div id="review-list" class="timeline" aria-live="polite"></div>
     </section>
 
     <section id="panel-write" class="tab-panel write-panel" role="tabpanel" aria-labelledby="tab-write" hidden>
       <div class="section-heading">
         <div>
-          <h2>Review <span id="write-sprint-name">Sprint 20</span></h2>
+          <h2>Review Maison Bleu</h2>
           <p>A rating and an honest note are enough to get the conversation started.</p>
         </div>
       </div>
@@ -93,8 +81,29 @@
           <label class="field-label" for="next-step">One thing to try next sprint <span class="optional">optional</span></label>
           <p class="field-help">A small, specific change the team can act on.</p>
           <input id="next-step" maxlength="300" placeholder="e.g. Review scope together before sprint planning" />
-          <input id="action-owner" maxlength="80" placeholder="Owner, if known" aria-label="Action owner" />
         </div>
+
+        <section class="review-art" aria-labelledby="review-art-title">
+          <div class="review-art-heading">
+            <div><span class="eyebrow">OPTIONAL</span><h3 id="review-art-title">Illustrate your review</h3></div>
+            <p>Make an original scene inspired by what you wrote. Your image will appear with your review.</p>
+          </div>
+          <details class="art-details">
+            <summary>Add scene or character notes</summary>
+            <label for="art-scene">A moment to show</label>
+            <textarea id="art-scene" rows="2" maxlength="240" placeholder="The team finally unblocked the launch…"></textarea>
+            <label for="art-cast">Character or mood notes</label>
+            <textarea id="art-cast" rows="2" maxlength="240" placeholder="A curious teal bunny and a relieved coral bear…"></textarea>
+          </details>
+          <label class="art-code-label" for="art-code">Private art code <span class="optional">for live generation</span></label>
+          <input id="art-code" type="password" autocomplete="off" placeholder="Your private code" />
+          <div class="art-actions"><button type="button" id="generate-art" class="secondary-button">Generate illustration</button><button type="button" id="copy-prompt" class="subtle-button">Copy image prompt</button></div>
+          <p id="art-message" role="status" aria-live="polite"></p>
+          <div id="review-art-preview" class="review-art-preview" hidden>
+            <img id="art-preview-image" alt="Generated illustration for this review" />
+            <button type="button" id="remove-art" class="subtle-button">Remove image</button>
+          </div>
+        </section>
 
         <div class="form-bottom">
           <label class="name-field" for="reviewer-name">Your name <span class="optional">optional</span><input id="reviewer-name" maxlength="60" placeholder="A teammate" /></label>
@@ -104,39 +113,6 @@
     </section>
   </main>
 
-  <footer>Reviews stay in this browser for now. <span>The Sprint Table</span></footer>
-
-  <dialog id="sprint-dialog" class="modal">
-    <form id="sprint-form" method="dialog">
-      <div class="modal-top"><span class="eyebrow">SET THE TABLE</span><button type="button" class="icon-close" data-close="sprint-dialog" aria-label="Close">×</button></div>
-      <h2>Edit this sprint</h2>
-      <p>Choose a sprint, update its details, or start a new one.</p>
-      <label for="board-picker">Your sprints<select id="board-picker"></select></label>
-      <label for="edit-title">Sprint name<input id="edit-title" maxlength="80" required /></label>
-      <label for="edit-team">Team name<input id="edit-team" maxlength="60" /></label>
-      <label for="edit-dates">Dates or timeframe<input id="edit-dates" maxlength="60" /></label>
-      <label for="edit-description">Short description<textarea id="edit-description" rows="3" maxlength="180"></textarea></label>
-      <div class="modal-actions"><button type="button" id="new-sprint" class="subtle-button">+ New sprint</button><button type="submit" class="primary-button">Save changes</button></div>
-    </form>
-  </dialog>
-
-  <dialog id="art-dialog" class="modal art-modal">
-    <div class="modal-top"><span class="eyebrow">COVER ART</span><button type="button" class="icon-close" data-close="art-dialog" aria-label="Close">×</button></div>
-    <div class="art-modal-grid">
-      <div>
-        <h2>Make a new cover.</h2>
-        <p>Describe an original cast of playful animal adventurers in your sprint’s restaurant.</p>
-        <label for="art-scene">What are they celebrating?</label>
-        <textarea id="art-scene" rows="3" maxlength="240" placeholder="The team shipped the new checkout..."></textarea>
-        <label for="art-cast">Character or mood notes</label>
-        <textarea id="art-cast" rows="3" maxlength="240" placeholder="A curious teal bunny, warm evening light..."></textarea>
-        <label for="art-code">Art studio code <span class="optional">needed for live generation</span></label>
-        <input id="art-code" type="password" autocomplete="off" placeholder="Your private code" />
-        <div class="art-actions"><button type="button" id="copy-prompt" class="subtle-button">Copy prompt</button><button type="button" id="generate-art" class="primary-button">Generate art</button><button type="button" id="download-cover" class="subtle-button">Download cover</button></div>
-        <p id="art-message" role="status" aria-live="polite">The sample cover is ready. Live generation needs an API key on the server.</p>
-      </div>
-      <img id="art-preview-image" src="/assets/sprint-kitchen.jpg" alt="Current sprint cover art" />
-    </div>
-  </dialog>
+  <footer>Reviews stay in this browser for now.</footer>
 </body>
 </html>

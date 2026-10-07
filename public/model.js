@@ -1,4 +1,5 @@
 export const STORAGE_KEY = 'the-sprint-table-v1';
+export const RESTAURANT_NAME = 'Maison Bleu';
 
 export function id() {
   return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -10,7 +11,7 @@ export function newBoard(overrides = {}) {
     title: 'Sprint 20',
     team: 'The Product Kitchen',
     dates: 'Oct 2026',
-    description: 'Our pretend restaurant, reviewed by the team.',
+    description: '',
     cover: '',
     reviews: [],
     ...overrides,
@@ -53,7 +54,7 @@ export function createReview(input) {
     win: String(input.win || '').trim().slice(0, 1000),
     friction: String(input.friction || '').trim().slice(0, 1000),
     next: String(input.next || '').trim().slice(0, 300),
-    owner: String(input.owner || '').trim().slice(0, 80),
+    image: typeof input.image === 'string' && input.image.startsWith('data:image/jpeg;base64,') ? input.image : '',
     createdAt: new Date().toISOString(),
     helpful: false,
     done: false,
@@ -63,7 +64,7 @@ export function createReview(input) {
 export function buildRecap(board) {
   const { count, average } = reviewStats(board.reviews);
   const lines = [
-    `# ${board.title}`,
+    `# ${RESTAURANT_NAME} · ${board.title}`,
     '',
     `${board.team}${board.dates ? ` · ${board.dates}` : ''}`,
     '',
@@ -73,7 +74,7 @@ export function buildRecap(board) {
     '',
   ];
   const actions = board.reviews.filter(review => review.next);
-  if (actions.length) actions.forEach(review => lines.push(`- [${review.done ? 'x' : ' '}] ${review.next}${review.owner ? ` — ${review.owner}` : ''}`));
+  if (actions.length) actions.forEach(review => lines.push(`- [${review.done ? 'x' : ' '}] ${review.next}`));
   else lines.push('_No actions yet._');
   lines.push('', '## Reviews', '');
   if (!count) lines.push('_No reviews yet._');
@@ -83,7 +84,7 @@ export function buildRecap(board) {
     if (review.body) lines.push(review.body, '');
     if (review.win) lines.push(`**What worked:** ${review.win}`, '');
     if (review.friction) lines.push(`**What needs work:** ${review.friction}`, '');
-    if (review.next) lines.push(`**Try next:** ${review.next}${review.owner ? ` (owner: ${review.owner})` : ''}`, '');
+    if (review.next) lines.push(`**Try next:** ${review.next}`, '');
   }
   return lines.join('\n');
 }

@@ -13,15 +13,17 @@ function response() {
   };
 }
 
-test('a useful review produces a rating, action, and portable recap', () => {
+test('a useful review produces a rating, action, and portable recap without an owner', () => {
   const input = { rating: 4, name: 'Alex', tags: ['Teamwork', 'Invalid tag'], win: 'Pairing on the launch made fixes much faster.', friction: 'Reviews arrived too late.', next: 'Schedule a mid-sprint review.', owner: 'Alex' };
   assert.equal(validateReview(input), '');
   const review = createReview(input);
   assert.deepEqual(review.tags, ['Teamwork']);
-  const board = newBoard({ title: 'Sprint 13', reviews: [review] });
+  const board = newBoard({ reviews: [review] });
   assert.deepEqual(reviewStats(board.reviews), { count: 1, average: 4 });
   const recap = buildRecap(board);
-  assert.match(recap, /Schedule a mid-sprint review\. — Alex/);
+  assert.match(recap, /# Maison Bleu · Sprint 20/);
+  assert.match(recap, /Schedule a mid-sprint review\./);
+  assert.doesNotMatch(recap, /Owner|owner|— Alex/);
   assert.match(recap, /Average rating: 4\.0\/5 from 1 review/);
 });
 
@@ -31,19 +33,21 @@ test('reviews require both a valid rating and something to discuss', () => {
   assert.match(validateReview({ rating: 4, body: '', next: 'Plan earlier' }), /Write at least 10 characters/);
 });
 
-test('Sprint 20 starts with an empty real-review timeline and accepts one review body', () => {
+test('Sprint 20 starts with an empty review timeline and accepts illustrated reviews', () => {
   const board = newBoard();
   assert.equal(board.title, 'Sprint 20');
   assert.equal(board.reviews.length, 0);
-  const review = createReview({ rating: 5, body: 'The team helped each other clear blockers quickly.', tags: ['Teamwork'], next: 'Keep the short check-ins.' });
+  const review = createReview({ rating: 5, body: 'The team helped each other clear blockers quickly.', tags: ['Teamwork'], next: 'Keep the short check-ins.', image: 'data:image/jpeg;base64,YWJj' });
   board.reviews.push(review);
   assert.equal(review.body, 'The team helped each other clear blockers quickly.');
+  assert.equal(review.image, 'data:image/jpeg;base64,YWJj');
   assert.match(buildRecap(board), /The team helped each other clear blockers quickly/);
 });
 
 test('art prompt asks for an original cast without franchise characters', () => {
-  const prompt = buildArtPrompt({ title: 'Sprint 13', description: '', scene: 'Celebrating a launch', cast: 'Teal bunny' });
-  assert.match(prompt, /Sprint 13/);
+  const prompt = buildArtPrompt({ title: 'Sprint 20', review: 'We collaborated to rescue the launch.', rating: 5, next: 'Plan QA sooner.', scene: 'Celebrating a launch', cast: 'Teal bunny' });
+  assert.match(prompt, /Sprint 20/);
+  assert.match(prompt, /We collaborated to rescue the launch/);
   assert.match(prompt, /entirely original/);
   assert.match(prompt, /Do not depict, imitate, or include any existing television or franchise characters/);
   assert.match(prompt, /Celebrating a launch/);
@@ -71,16 +75,20 @@ test('image endpoint checks the code and sends the art prompt server-side', asyn
   const oldFetch = globalThis.fetch;
   process.env.OPENAI_API_KEY = 'test-key';
   process.env.ART_STUDIO_CODE = 'private-code';
-  const body = { title: 'Sprint 13', description: 'A launch', scene: 'Celebration', cast: 'Original teal bunny', code: 'private-code' };
+  const body = { title: 'Sprint 20', review: 'We collaborated to rescue the launch.', rating: 5, next: 'Plan QA sooner.', scene: 'Celebration', cast: 'Original teal bunny', code: 'private-code' };
   try {
     const denied = response();
     await generateImage({ method: 'POST', body: { ...body, code: 'wrong' } }, denied);
     assert.equal(denied.statusCode, 401);
+    const emptyReview = response();
+    await generateImage({ method: 'POST', body: { ...body, review: '' } }, emptyReview);
+    assert.equal(emptyReview.statusCode, 400);
+    assert.match(emptyReview.body.error, /Write your review/);
     globalThis.fetch = async (url, options) => {
       assert.equal(url, 'https://api.openai.com/v1/images/generations');
       assert.equal(options.headers.Authorization, 'Bearer test-key');
       assert.ok(!JSON.stringify(options.body).includes('private-code'));
-      assert.match(JSON.parse(options.body).prompt, /Sprint 13/);
+      assert.match(JSON.parse(options.body).prompt, /Sprint 20/);
       return { ok: true, json: async () => ({ data: [{ b64_json: 'YWJj' }] }) };
     };
     const accepted = response();
