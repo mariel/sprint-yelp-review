@@ -1,10 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
   "buildCommand": "",
-  "outputDirectory": "public",
-  "functions": {
-    "api/generate-image.js": {
-      "maxDuration": 60
-    }
-  }
+  "outputDirectory": "public"
 }
