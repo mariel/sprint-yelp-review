@@ -11,7 +11,23 @@
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <main class="app-shell">
+  <section id="access-gate" class="access-screen" aria-labelledby="access-title">
+    <div class="access-panel">
+      <span class="eyebrow">SPRINT 20</span>
+      <h1 id="access-title">Maison Bleu</h1>
+      <p id="access-intro">A table for the team.</p>
+      <p id="access-status" role="status">Opening the restaurant…</p>
+      <form id="access-form" hidden>
+        <label for="site-password">Enter the team password</label>
+        <input id="site-password" type="password" autocomplete="current-password" required />
+        <button type="submit" class="primary-button">Enter Maison Bleu <span aria-hidden="true">→</span></button>
+        <p id="access-message" role="status" aria-live="polite"></p>
+      </form>
+      <button type="button" id="retry-access" class="subtle-button" hidden>Try again</button>
+    </div>
+  </section>
+
+  <main id="app-shell" class="app-shell" hidden>
     <section class="sprint-card" aria-labelledby="sprint-title">
       <img id="hero-image" src="/assets/sprint-kitchen.jpg" alt="Original playful animal characters celebrating in a restaurant kitchen" />
       <div class="sprint-copy">
@@ -31,6 +47,11 @@
           <h2>Reviews for Maison Bleu</h2>
         </div>
         <button type="button" id="download-recap" class="subtle-button">↓ Download recap</button>
+      </div>
+      <div id="local-reviews-note" class="local-reviews-note" hidden>
+        <p id="local-reviews-text"></p>
+        <button type="button" id="import-local" class="subtle-button">Add them to the shared timeline</button>
+        <p id="import-message" role="status" aria-live="polite"></p>
       </div>
       <div id="summary-line" class="summary-line" aria-label="Sprint rating summary">
         <span class="summary-score" id="average-rating">—</span>
@@ -113,6 +134,6 @@
     </section>
   </main>
 
-  <footer>Reviews stay in this browser for now.</footer>
+  <footer id="app-footer" hidden>Reviews stay in this browser for now.</footer>
 </body>
 </html>

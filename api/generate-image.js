@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { hasSiteAccess } from '../lib/access.js';
 import { buildArtPrompt } from '../public/prompt.js';
 
 function send(res, status, payload) {
@@ -26,6 +27,7 @@ async function getBody(req) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'Use POST to generate review art.' });
+  if (!hasSiteAccess(req)) return send(res, 401, { error: 'Enter the site password first.' });
   if (!process.env.OPENAI_API_KEY || !process.env.ART_STUDIO_CODE) {
     return send(res, 503, { error: 'Live art is not connected yet. Add OPENAI_API_KEY and ART_STUDIO_CODE on the server, or copy the art prompt.' });
   }

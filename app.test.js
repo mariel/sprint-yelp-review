@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { buildRecap, createReview, newBoard, reviewStats, validateReview } from './public/model.js';
 import { buildArtPrompt } from './public/prompt.js';
 import generateImage from './api/generate-image.js';
+import access from './api/access.js';
+import reviews from './api/reviews.js';
 
 function response() {
   return {
@@ -66,6 +68,52 @@ test('image endpoint stays unavailable until server secrets are configured', asy
   } finally {
     if (oldKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = oldKey;
     if (oldCode === undefined) delete process.env.ART_STUDIO_CODE; else process.env.ART_STUDIO_CODE = oldCode;
+  }
+});
+
+test('site password unlocks review access with a signed cookie', async () => {
+  const previousCode = process.env.RETRO_ACCESS_CODE;
+  const previousDatabase = process.env.DATABASE_URL;
+  process.env.RETRO_ACCESS_CODE = 'test-site-password';
+  delete process.env.DATABASE_URL;
+  try {
+    const locked = response();
+    await access({ method: 'GET', headers: {} }, locked);
+    assert.deepEqual(locked.body, { requiresPassword: true, unlocked: false, setupRequired: false });
+    const blockedReviews = response();
+    await reviews({ method: 'GET', headers: {} }, blockedReviews);
+    assert.equal(blockedReviews.statusCode, 401);
+    const wrong = response();
+    await access({ method: 'POST', body: { password: 'wrong' }, headers: {} }, wrong);
+    assert.equal(wrong.statusCode, 401);
+    const accepted = response();
+    await access({ method: 'POST', body: { password: 'test-site-password' }, headers: {} }, accepted);
+    assert.equal(accepted.statusCode, 200);
+    assert.match(accepted.headers['Set-Cookie'], /HttpOnly; SameSite=Strict/);
+    const cookie = accepted.headers['Set-Cookie'].split(';')[0];
+    const unlocked = response();
+    await access({ method: 'GET', headers: { cookie } }, unlocked);
+    assert.equal(unlocked.body.unlocked, true);
+    const tampered = response();
+    await access({ method: 'GET', headers: { cookie: `${cookie.slice(0, -1)}${cookie.endsWith('0') ? '1' : '0'}` } }, tampered);
+    assert.equal(tampered.body.unlocked, false);
+    const localFallback = response();
+    await reviews({ method: 'GET', headers: { cookie } }, localFallback);
+    assert.deepEqual(localFallback.body, { mode: 'local', reviews: [] });
+    const noDatabasePost = response();
+    await reviews({ method: 'POST', headers: { cookie }, body: {} }, noDatabasePost);
+    assert.equal(noDatabasePost.statusCode, 503);
+    delete process.env.RETRO_ACCESS_CODE;
+    process.env.DATABASE_URL = 'postgresql://example.invalid/reviews';
+    const missingPassword = response();
+    await access({ method: 'GET', headers: {} }, missingPassword);
+    assert.deepEqual(missingPassword.body, { requiresPassword: true, unlocked: false, setupRequired: true });
+    const privateByDefault = response();
+    await reviews({ method: 'GET', headers: {} }, privateByDefault);
+    assert.equal(privateByDefault.statusCode, 401);
+  } finally {
+    if (previousCode === undefined) delete process.env.RETRO_ACCESS_CODE; else process.env.RETRO_ACCESS_CODE = previousCode;
+    if (previousDatabase === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = previousDatabase;
   }
 });
 

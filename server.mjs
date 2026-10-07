@@ -3,6 +3,9 @@ import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import generateImage from './api/generate-image.js';
+import access from './api/access.js';
+import reviews from './api/reviews.js';
+import reviewImage from './api/review-image.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const publicDir = resolve(root, 'public');
@@ -11,6 +14,9 @@ const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   if (pathname === '/api/generate-image') return generateImage(req, res);
+  if (pathname === '/api/access') return access(req, res);
+  if (pathname === '/api/reviews') return reviews(req, res);
+  if (pathname === '/api/review-image') return reviewImage(req, res);
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end('Method not allowed'); }
   const file = resolve(publicDir, `.${pathname === '/' ? '/index.html' : pathname}`);
   if (!file.startsWith(`${publicDir}/`)) { res.writeHead(403); return res.end('Forbidden'); }
