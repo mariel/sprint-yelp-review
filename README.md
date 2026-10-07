@@ -21,10 +21,10 @@ If `DATABASE_URL` is not configured, the app remains in browser-only mode and sa
 
 ## Review illustrations
 
-The large restaurant hero image is fixed. When writing a review, you can copy an image prompt and use it in an image tool. To enable **Generate illustration** locally, set `OPENAI_API_KEY` and a private `ART_STUDIO_CODE` in your shell before running `npm start`. Enter the code in the review form; it is not saved in the browser. The API key stays server-side. Image generation uses OpenAI's Images API and may incur API charges.
+The large restaurant hero image is fixed. When writing a review, you can add scene and character notes and select **Generate illustration**. To enable generation locally, set `OPENAI_API_KEY` and a private `ART_STUDIO_CODE` in your shell before running `npm start`. Enter the code in the review form; it is not saved in the browser. The API key stays server-side. Image generation uses OpenAI's Images API and may incur API charges.
 
 The API endpoint is `api/generate-image.js`, ready for Vercel's Node.js Functions. To enable generation, add `OPENAI_API_KEY` and `ART_STUDIO_CODE` in Vercel and redeploy. The frontend is plain static files in `public/` and has no build step.
 
 ## Limits
 
-The password is shared by the team; this is not a system of individual accounts. Shared posts currently cannot be edited or removed from the app. Each generated illustration is compressed before it is stored with its review in Postgres.
+The password is shared by the team; this is not a system of individual accounts. Each new shared review gets a private deletion token saved in the browser that posted it. That browser can delete the review from the team timeline; another browser with the team password cannot. Clearing browser storage or switching devices loses the ability to delete it. Shared reviews posted before deletion tokens were added cannot be deleted in the app. Shared posts cannot be edited. Each generated illustration is compressed before it is stored with its review in Postgres.

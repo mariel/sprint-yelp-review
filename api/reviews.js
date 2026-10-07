@@ -1,6 +1,7 @@
 import { createReview, validateReview } from '../public/model.js';
 import { hasSiteAccess } from '../lib/access.js';
 import { hasSharedDatabase, sharedDb } from '../lib/shared-db.js';
+import { createDeleteToken, hashDeleteToken, validDeleteToken } from '../lib/review-ownership.js';
 
 function send(res, status, payload) {
   res.statusCode = status;
@@ -49,7 +50,18 @@ export default async function handler(req, res) {
       `;
       return send(res, 200, { mode: 'shared', reviews: rows.map(mapReview) });
     }
-    if (req.method !== 'POST') return send(res, 405, { error: 'Use GET or POST for reviews.' });
+    if (req.method === 'DELETE') {
+      const body = await readBody(req);
+      if (typeof body.id !== 'string' || body.id.length > 100 || !validDeleteToken(body.deleteToken)) return send(res, 400, { error: 'This browser cannot delete that review.' });
+      const removed = await sql`
+        DELETE FROM sprint_20_reviews
+        WHERE id = ${body.id} AND delete_token_hash = ${hashDeleteToken(body.deleteToken)}
+        RETURNING id
+      `;
+      if (!removed.length) return send(res, 403, { error: 'This browser cannot delete that review.' });
+      return send(res, 200, { deleted: true });
+    }
+    if (req.method !== 'POST') return send(res, 405, { error: 'Use GET, POST, or DELETE for reviews.' });
     const body = await readBody(req);
     const input = body.review;
     if (!input || typeof input !== 'object') return send(res, 400, { error: 'Add a review before posting.' });
@@ -63,13 +75,19 @@ export default async function handler(req, res) {
     const originalDate = body.createdAt && new Date(body.createdAt);
     const createdAt = sourceId && originalDate && Number.isFinite(originalDate.getTime()) && originalDate.getTime() <= Date.now() ? originalDate.toISOString() : review.createdAt;
     const imageBase64 = image ? image.slice('data:image/jpeg;base64,'.length) : null;
+    const deleteToken = createDeleteToken();
     const inserted = await sql`
-      INSERT INTO sprint_20_reviews (id, rating, name, body, tags, next_step, created_at, image_base64, source_id)
-      VALUES (${review.id}, ${review.rating}, ${review.name}, ${review.body}, ${JSON.stringify(review.tags)}::jsonb, ${review.next}, ${createdAt}, ${imageBase64}, ${sourceId})
+      INSERT INTO sprint_20_reviews (id, rating, name, body, tags, next_step, created_at, image_base64, source_id, delete_token_hash)
+      VALUES (${review.id}, ${review.rating}, ${review.name}, ${review.body}, ${JSON.stringify(review.tags)}::jsonb, ${review.next}, ${createdAt}, ${imageBase64}, ${sourceId}, ${hashDeleteToken(deleteToken)})
       ON CONFLICT (source_id) DO NOTHING
       RETURNING id
     `;
-    return send(res, inserted.length ? 201 : 200, { review: { ...review, createdAt, image: image ? `/api/review-image?id=${encodeURIComponent(review.id)}` : '' }, alreadyImported: !inserted.length });
+    if (!inserted.length) {
+      const existing = await sql`SELECT id FROM sprint_20_reviews WHERE source_id = ${sourceId}`;
+      if (!existing.length) return send(res, 409, { error: 'That review changed while it was being imported. Please try again.' });
+      return send(res, 200, { review: { id: existing[0].id }, alreadyImported: true });
+    }
+    return send(res, 201, { review: { ...review, createdAt, image: image ? `/api/review-image?id=${encodeURIComponent(review.id)}` : '' }, deleteToken, alreadyImported: false });
   } catch (error) {
     if (error.message === 'Request too large' || error instanceof SyntaxError) return send(res, 400, { error: 'The review request could not be read.' });
     console.error('Shared reviews failed', error.name || 'Error');

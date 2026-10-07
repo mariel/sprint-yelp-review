@@ -58,6 +58,7 @@
         <span class="summary-stars" id="average-stars" aria-hidden="true">☆☆☆☆☆</span>
         <span class="summary-count" id="review-count">No reviews yet</span>
       </div>
+      <p id="review-message" role="status" aria-live="polite"></p>
       <div id="review-list" class="timeline" aria-live="polite"></div>
     </section>
 
@@ -109,16 +110,15 @@
             <div><span class="eyebrow">OPTIONAL</span><h3 id="review-art-title">Illustrate your review</h3></div>
             <p>Make an original scene inspired by what you wrote. Your image will appear with your review.</p>
           </div>
-          <details class="art-details">
-            <summary>Add scene or character notes</summary>
+          <div class="art-details">
             <label for="art-scene">A moment to show</label>
             <textarea id="art-scene" rows="2" maxlength="240" placeholder="The team finally unblocked the launch…"></textarea>
             <label for="art-cast">Character or mood notes</label>
             <textarea id="art-cast" rows="2" maxlength="240" placeholder="A curious teal bunny and a relieved coral bear…"></textarea>
-          </details>
+          </div>
           <label class="art-code-label" for="art-code">Private art code <span class="optional">for live generation</span></label>
           <input id="art-code" type="password" autocomplete="off" placeholder="Your private code" />
-          <div class="art-actions"><button type="button" id="generate-art" class="secondary-button">Generate illustration</button><button type="button" id="copy-prompt" class="subtle-button">Copy image prompt</button></div>
+          <div class="art-actions"><button type="button" id="generate-art" class="secondary-button">Generate illustration</button></div>
           <p id="art-message" role="status" aria-live="polite"></p>
           <div id="review-art-preview" class="review-art-preview" hidden>
             <img id="art-preview-image" alt="Generated illustration for this review" />

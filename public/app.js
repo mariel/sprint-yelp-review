@@ -1,9 +1,9 @@
 import { STORAGE_KEY, activeBoard, buildRecap, createReview, initialState, newBoard, reviewStats, validateReview } from './model.js';
-import { buildArtPrompt } from './prompt.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const importedKey = 'maison-bleu-imported-v1';
+const deleteTokensKey = 'maison-bleu-delete-tokens-v1';
 const ratingWords = ['', 'Needs a new recipe', 'Some rough edges', 'A mixed plate', 'Pretty satisfying', 'Chef’s kiss!'];
 
 let state = loadState();
@@ -12,6 +12,31 @@ let draftImage = '';
 let storageMode = 'loading';
 let sharedReviews = [];
 let importedIds = loadImportedIds();
+let deleteTokens = loadDeleteTokens();
+
+function loadDeleteTokens() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(deleteTokensKey) || '{}');
+    return new Map(saved && typeof saved === 'object' && !Array.isArray(saved) ? Object.entries(saved).filter(([id, token]) => typeof id === 'string' && typeof token === 'string') : []);
+  } catch { return new Map(); }
+}
+
+function saveDeleteToken(id, token) {
+  if (typeof id !== 'string' || typeof token !== 'string') return false;
+  deleteTokens.set(id, token);
+  try { localStorage.setItem(deleteTokensKey, JSON.stringify(Object.fromEntries(deleteTokens))); return true; }
+  catch { return false; }
+}
+
+function removeDeleteToken(id) {
+  deleteTokens.delete(id);
+  try { localStorage.setItem(deleteTokensKey, JSON.stringify(Object.fromEntries(deleteTokens))); } catch { /* This review is gone from the server. */ }
+}
+
+function setReviewMessage(message, kind = '') {
+  $('#review-message').textContent = message;
+  $('#review-message').className = kind;
+}
 
 function loadImportedIds() {
   try { return new Set(JSON.parse(localStorage.getItem(importedKey) || '[]')); }
@@ -81,7 +106,7 @@ function reviewMarkup(review) {
   const illustration = image ? `<img class="review-image" src="${escapeHtml(image)}" alt="Illustration generated for this review" loading="lazy" />` : '';
   const tags = (review.tags || []).length ? `<div class="review-tags">${review.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div>` : '';
   const next = review.next ? `<div class="next-note"><span class="arrow" aria-hidden="true">→</span><div><strong>Next sprint idea</strong><p>${escapeHtml(review.next)}</p></div></div>` : '';
-  const actions = storageMode === 'local' ? `<div class="review-actions">${review.next ? `<button type="button" data-done="${escapeHtml(review.id)}">${review.done ? '✓ Done' : 'Mark action done'}</button>` : ''}<button type="button" data-delete="${escapeHtml(review.id)}">Remove review</button></div>` : '';
+  const actions = storageMode === 'local' ? `<div class="review-actions">${review.next ? `<button type="button" data-done="${escapeHtml(review.id)}">${review.done ? '✓ Done' : 'Mark action done'}</button>` : ''}<button type="button" data-delete="${escapeHtml(review.id)}">Delete my review</button></div>` : storageMode === 'shared' && deleteTokens.has(review.id) ? `<div class="review-actions"><button type="button" data-delete="${escapeHtml(review.id)}">Delete my review</button></div>` : '';
   return `<div class="timeline-entry"><time class="timeline-date" datetime="${escapeHtml(review.createdAt)}">${escapeHtml(dateText)}</time><article class="review-card"><div class="review-top"><div class="review-person"><span class="avatar" aria-hidden="true">${escapeHtml(review.name.charAt(0).toUpperCase())}</span><span><strong>${escapeHtml(review.name)}</strong><small>Team review</small></span></div><div class="review-stars" aria-label="${review.rating} out of 5 stars">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div></div>${body}${illustration}${tags}${next}${actions}</article></div>`;
 }
 
@@ -232,6 +257,7 @@ $('#import-local').addEventListener('click', async () => {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'A review could not be added.');
+      if (result.deleteToken) saveDeleteToken(result.review.id, result.deleteToken);
       importedIds.add(review.id);
       try { localStorage.setItem(importedKey, JSON.stringify([...importedIds])); } catch { /* The server also prevents duplicate imports. */ }
       imported += 1;
@@ -294,9 +320,11 @@ $('#review-form').addEventListener('submit', async event => {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'The review could not be posted.');
+      const canDeleteLater = saveDeleteToken(result.review.id, result.deleteToken);
       resetReviewForm();
       await loadReviews();
       setTab('reviews');
+      setReviewMessage(canDeleteLater ? '' : 'Review posted, but this browser could not save access to delete it later.', canDeleteLater ? '' : 'error');
       $('#panel-reviews').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) { $('#form-message').textContent = error.message; }
     finally { button.disabled = false; }
@@ -313,7 +341,7 @@ $('#review-form').addEventListener('submit', async event => {
   setTab('reviews');
   $('#panel-reviews').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
-$('#review-list').addEventListener('click', event => {
+$('#review-list').addEventListener('click', async event => {
   if (event.target.closest('[data-go-write]')) { setTab('write'); return; }
   if (event.target.closest('[data-retry-load]')) { storageMode = 'loading'; render(); loadReviews(); return; }
   const done = event.target.closest('[data-done]');
@@ -322,11 +350,32 @@ $('#review-list').addEventListener('click', event => {
     const review = activeBoard(state).reviews.find(item => item.id === done.dataset.done);
     if (review) { review.done = !review.done; saveState(); renderReviews(activeBoard(state)); }
   }
-  if (remove && confirm('Remove this review from this browser?')) {
+  if (remove && storageMode === 'shared') {
+    const id = remove.dataset.delete;
+    const deleteToken = deleteTokens.get(id);
+    if (!deleteToken || !confirm('Delete your review from the team timeline? This cannot be undone.')) return;
+    remove.disabled = true;
+    setReviewMessage('Deleting your review…');
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, deleteToken }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'The review could not be deleted.');
+      removeDeleteToken(id);
+      await loadReviews();
+      setReviewMessage('Your review was deleted.');
+    } catch (error) { setReviewMessage(error.message, 'error'); remove.disabled = false; }
+    return;
+  }
+  if (remove && storageMode === 'local' && confirm('Delete this review from this browser? This cannot be undone.')) {
     const board = activeBoard(state);
     board.reviews = board.reviews.filter(item => item.id !== remove.dataset.delete);
     saveState();
     render();
+    setReviewMessage('Your review was deleted.');
   }
 });
 $('#download-recap').addEventListener('click', () => {
@@ -340,13 +389,6 @@ $('#download-recap').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
-$('#copy-prompt').addEventListener('click', async () => {
-  if (artFields().review.length < 10) { setArtMessage('Write your review first (at least 10 characters).', 'error'); $('#review-body').focus(); return; }
-  try {
-    await navigator.clipboard.writeText(buildArtPrompt(artFields()));
-    setArtMessage('Image prompt copied.', 'success');
-  } catch { setArtMessage('Copying is unavailable in this browser.', 'error'); }
-});
 $('#generate-art').addEventListener('click', async () => {
   if (artFields().review.length < 10) { setArtMessage('Write your review first (at least 10 characters).', 'error'); $('#review-body').focus(); return; }
   const button = $('#generate-art');

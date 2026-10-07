@@ -5,6 +5,7 @@ import { buildArtPrompt } from './public/prompt.js';
 import generateImage from './api/generate-image.js';
 import access from './api/access.js';
 import reviews from './api/reviews.js';
+import { createDeleteToken, hashDeleteToken, validDeleteToken } from './lib/review-ownership.js';
 
 function response() {
   return {
@@ -46,6 +47,16 @@ test('Sprint 20 starts with an empty review timeline and accepts illustrated rev
   assert.match(buildRecap(board), /The team helped each other clear blockers quickly/);
 });
 
+test('deletion tokens are private, random, and validated before use', () => {
+  const first = createDeleteToken();
+  const second = createDeleteToken();
+  assert.equal(validDeleteToken(first), true);
+  assert.notEqual(first, second);
+  assert.notEqual(hashDeleteToken(first), hashDeleteToken(second));
+  assert.match(hashDeleteToken(first), /^[a-f0-9]{64}$/);
+  assert.equal(validDeleteToken('team-password'), false);
+});
+
 test('art prompt asks for an original cast without franchise characters', () => {
   const prompt = buildArtPrompt({ title: 'Sprint 20', review: 'We collaborated to rescue the launch.', rating: 5, next: 'Plan QA sooner.', scene: 'Celebrating a launch', cast: 'Teal bunny' });
   assert.match(prompt, /Sprint 20/);
@@ -83,6 +94,9 @@ test('site password unlocks review access with a signed cookie', async () => {
     const blockedReviews = response();
     await reviews({ method: 'GET', headers: {} }, blockedReviews);
     assert.equal(blockedReviews.statusCode, 401);
+    const blockedDelete = response();
+    await reviews({ method: 'DELETE', headers: {}, body: { id: 'someone-elses-review', deleteToken: createDeleteToken() } }, blockedDelete);
+    assert.equal(blockedDelete.statusCode, 401);
     const wrong = response();
     await access({ method: 'POST', body: { password: 'wrong' }, headers: {} }, wrong);
     assert.equal(wrong.statusCode, 401);
@@ -103,6 +117,9 @@ test('site password unlocks review access with a signed cookie', async () => {
     const noDatabasePost = response();
     await reviews({ method: 'POST', headers: { cookie }, body: {} }, noDatabasePost);
     assert.equal(noDatabasePost.statusCode, 503);
+    const noDatabaseDelete = response();
+    await reviews({ method: 'DELETE', headers: { cookie }, body: { id: 'test', deleteToken: createDeleteToken() } }, noDatabaseDelete);
+    assert.equal(noDatabaseDelete.statusCode, 503);
     delete process.env.RETRO_ACCESS_CODE;
     process.env.DATABASE_URL = 'postgresql://example.invalid/reviews';
     const missingPassword = response();

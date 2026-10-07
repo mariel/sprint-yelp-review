@@ -80,6 +80,9 @@ a { color: inherit; text-decoration: none; }
 .review-actions { display: flex; gap: 16px; margin-top: 15px; }
 .review-actions button { border: 0; background: none; padding: 0; color: #9a9189; font-size: 11px; font-weight: 700; }
 .review-actions button:hover { color: #c42323; }
+#review-message { margin: 0; color: #28734a; font-size: 12px; }
+#review-message.error { color: #b72525; }
+#review-message:empty { display: none; }
 .empty-state { padding: 48px 20px; border: 1px dashed #dcd5cf; border-radius: 12px; background: #fff; text-align: center; }
 .empty-state h3 { margin: 0 0 7px; font-size: 18px; }
 .empty-state p { margin: 0 0 17px; color: #817970; font-size: 13px; }
@@ -111,7 +114,6 @@ a { color: inherit; text-decoration: none; }
 .review-art-heading h3 { margin: 5px 0 4px; font-size: 18px; letter-spacing: -.5px; }
 .review-art-heading p { margin: 0 0 16px; color: #817970; font-size: 12px; line-height: 1.5; }
 .art-details { margin-bottom: 15px; }
-.art-details summary { width: fit-content; color: #605b57; font-size: 12px; font-weight: 750; cursor: pointer; }
 .art-details label, .art-code-label { display: block; margin: 14px 0 7px; color: #49413c; font-size: 12px; font-weight: 750; }
 .art-details textarea { min-height: 65px; }
 .art-code-label { margin-top: 0; }
