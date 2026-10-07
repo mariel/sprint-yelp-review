@@ -134,8 +134,9 @@ a { color: inherit; text-decoration: none; }
 .post-controls { max-width: 340px; }
 #illustration-post-hint { margin: 0 0 9px; color: #9b382f; font-size: 11px; line-height: 1.45; text-align: right; }
 #illustration-post-hint[hidden] { display: none; }
-.submit-group { display: flex; align-items: center; gap: 13px; }
+.submit-group { display: flex; align-items: center; justify-content: flex-end; }
 .submit-group #form-message { max-width: 190px; color: #aa2929; font-size: 11px; line-height: 1.4; text-align: right; }
+.submit-group #form-message:not(:empty) { margin-right: 13px; }
 .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 8px; padding: 12px 18px; background: #d32323; color: #fff; font-size: 12px; font-weight: 800; white-space: nowrap; }
 .primary-button span { color: #fff; }
 .primary-button:hover { background: #b51f1f; }
@@ -172,7 +173,7 @@ footer { max-width: 1020px; margin: auto; padding: 0 24px 32px; color: #a19891; 
   .name-field { width: 100%; margin-bottom: 20px; }
   .post-controls { max-width: none; }
   #illustration-post-hint { text-align: left; }
-  .submit-group { justify-content: space-between; }
+  .submit-group { justify-content: flex-start; }
   .submit-group span { text-align: left; }
   footer { padding: 0 18px 25px; }
 }
