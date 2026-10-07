@@ -80,6 +80,8 @@ function render() {
 
   const { count, average } = reviewStats(board.reviews);
   $('#tab-count').textContent = String(count);
+  $('#summary-line').hidden = count === 0;
+  $('#download-recap').hidden = count === 0;
   $('#average-rating').textContent = count ? average.toFixed(1) : '—';
   $('#average-stars').textContent = count ? `${'★'.repeat(Math.round(average))}${'☆'.repeat(5 - Math.round(average))}` : '☆☆☆☆☆';
   $('#review-count').textContent = count ? `${count} review${count === 1 ? '' : 's'}` : 'No reviews yet';
