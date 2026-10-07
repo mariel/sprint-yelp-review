@@ -21,7 +21,7 @@ If `DATABASE_URL` is not configured, the app remains in browser-only mode and sa
 
 ## Review illustrations
 
-The large restaurant hero image is fixed. When writing a review, you can add scene and character notes and select **Generate illustration**. To enable generation locally, set `OPENAI_API_KEY` and a private `ART_STUDIO_CODE` in your shell before running `npm start`. Enter the code in the review form; it is not saved in the browser. The API key stays server-side. Image generation uses OpenAI's Images API and may incur API charges.
+The large restaurant hero image is fixed. When writing a review, you can add scene and character notes and select **Generate illustration**. If you enter anything in the illustration section, the app waits for an image before allowing **Post review**; clear those fields to post without one. To enable generation locally, set `OPENAI_API_KEY` and a private `ART_STUDIO_CODE` in your shell before running `npm start`. Enter the code in the review form; it is not saved in the browser. The API key stays server-side. Image generation uses OpenAI's Images API and may incur API charges.
 
 The API endpoint is `api/generate-image.js`, ready for Vercel's Node.js Functions. To enable generation, add `OPENAI_API_KEY` and `ART_STUDIO_CODE` in Vercel and redeploy. The frontend is plain static files in `public/` and has no build step.
 

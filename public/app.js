@@ -9,6 +9,8 @@ const ratingWords = ['', 'Needs a new recipe', 'Some rough edges', 'A mixed plat
 let state = loadState();
 let draftRating = 0;
 let draftImage = '';
+let isPosting = false;
+let isGeneratingArt = false;
 let storageMode = 'loading';
 let sharedReviews = [];
 let importedIds = loadImportedIds();
@@ -197,6 +199,7 @@ function resetReviewForm() {
   $$('#tag-options button').forEach(button => button.setAttribute('aria-pressed', 'false'));
   $('#rating-caption').textContent = 'Select your rating';
   $('#form-message').textContent = '';
+  syncPostButton();
 }
 
 async function resizeReviewImage(dataUrl) {
@@ -213,6 +216,27 @@ async function resizeReviewImage(dataUrl) {
 
 function artFields() {
   return { title: activeBoard(state).title, review: $('#review-body').value.trim(), rating: draftRating, next: $('#next-step').value.trim(), scene: $('#art-scene').value.trim(), cast: $('#art-cast').value.trim() };
+}
+
+function illustrationHasInput() {
+  return ['#art-scene', '#art-cast', '#art-code'].some(selector => $(selector).value.trim());
+}
+
+function illustrationBlocksPost() {
+  return illustrationHasInput() && !draftImage;
+}
+
+function syncPostButton() {
+  const blocked = illustrationBlocksPost();
+  $('#review-form button[type="submit"]').disabled = isPosting || isGeneratingArt || blocked;
+  $('#illustration-post-hint').hidden = !blocked;
+}
+
+function clearDraftImage() {
+  draftImage = '';
+  $('#art-preview-image').removeAttribute('src');
+  $('#review-art-preview').hidden = true;
+  syncPostButton();
 }
 
 function setArtMessage(message, kind = '') {
@@ -287,8 +311,21 @@ $$('#rating-stars button').forEach(button => {
   });
 });
 $$('#tag-options button').forEach(button => button.addEventListener('click', () => button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true'))));
+['#art-scene', '#art-cast'].forEach(selector => $(selector).addEventListener('input', () => {
+  if (draftImage) {
+    clearDraftImage();
+    setArtMessage('Illustration details changed. Generate a new image before posting.', 'error');
+  }
+  if (!illustrationHasInput()) setArtMessage('');
+  syncPostButton();
+}));
+$('#art-code').addEventListener('input', () => {
+  if (!illustrationHasInput() && !draftImage) setArtMessage('');
+  syncPostButton();
+});
 $('#review-form').addEventListener('submit', async event => {
   event.preventDefault();
+  if (illustrationBlocksPost() || isGeneratingArt || isPosting) { syncPostButton(); return; }
   const input = {
     rating: draftRating,
     name: $('#reviewer-name').value,
@@ -309,8 +346,8 @@ $('#review-form').addEventListener('submit', async event => {
     return;
   }
   if (storageMode === 'shared') {
-    const button = $('#review-form button[type="submit"]');
-    button.disabled = true;
+    isPosting = true;
+    syncPostButton();
     $('#form-message').textContent = 'Posting…';
     try {
       const response = await fetch('/api/reviews', {
@@ -327,7 +364,7 @@ $('#review-form').addEventListener('submit', async event => {
       setReviewMessage(canDeleteLater ? '' : 'Review posted, but this browser could not save access to delete it later.', canDeleteLater ? '' : 'error');
       $('#panel-reviews').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) { $('#form-message').textContent = error.message; }
-    finally { button.disabled = false; }
+    finally { isPosting = false; syncPostButton(); }
     return;
   }
   activeBoard(state).reviews.push(createReview(input));
@@ -392,6 +429,9 @@ $('#download-recap').addEventListener('click', () => {
 $('#generate-art').addEventListener('click', async () => {
   if (artFields().review.length < 10) { setArtMessage('Write your review first (at least 10 characters).', 'error'); $('#review-body').focus(); return; }
   const button = $('#generate-art');
+  const requestedArt = artFields();
+  isGeneratingArt = true;
+  syncPostButton();
   button.disabled = true;
   button.textContent = 'Making your illustration…';
   setArtMessage('Cooking up a scene from your review. This may take a minute.');
@@ -399,21 +439,26 @@ $('#generate-art').addEventListener('click', async () => {
     const response = await fetch('/api/generate-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...artFields(), code: $('#art-code').value }),
+      body: JSON.stringify({ ...requestedArt, code: $('#art-code').value }),
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'The image could not be generated.');
+    const currentArt = artFields();
+    if (Object.keys(requestedArt).some(key => currentArt[key] !== requestedArt[key])) {
+      clearDraftImage();
+      setArtMessage('Your review changed while the image was generating. Generate it again.', 'error');
+      return;
+    }
     draftImage = await resizeReviewImage(result.image);
     $('#art-preview-image').src = draftImage;
     $('#review-art-preview').hidden = false;
+    syncPostButton();
     setArtMessage('Illustration ready. Post your review to add it to the timeline.', 'success');
   } catch (error) { setArtMessage(error.message, 'error'); }
-  finally { button.disabled = false; button.textContent = 'Generate illustration'; }
+  finally { isGeneratingArt = false; syncPostButton(); button.disabled = false; button.textContent = 'Generate illustration'; }
 });
 $('#remove-art').addEventListener('click', () => {
-  draftImage = '';
-  $('#art-preview-image').removeAttribute('src');
-  $('#review-art-preview').hidden = true;
+  clearDraftImage();
   setArtMessage('Illustration removed from this review.');
 });
 

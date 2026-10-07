@@ -128,7 +128,10 @@
 
         <div class="form-bottom">
           <label class="name-field" for="reviewer-name">Your name <span class="optional">optional</span><input id="reviewer-name" maxlength="60" placeholder="A teammate" /></label>
-          <div class="submit-group"><span id="form-message" role="status" aria-live="polite"></span><button class="primary-button" type="submit">Post review <span aria-hidden="true">→</span></button></div>
+          <div class="post-controls">
+            <p id="illustration-post-hint" role="status" aria-live="polite" hidden>Generate your illustration before posting, or clear the illustration fields to post without one.</p>
+            <div class="submit-group"><span id="form-message" role="status" aria-live="polite"></span><button class="primary-button" type="submit" aria-describedby="illustration-post-hint">Post review <span aria-hidden="true">→</span></button></div>
+          </div>
         </div>
       </form>
     </section>
